@@ -1,0 +1,30 @@
+services:
+  boltzdesign:
+    build: .
+    container_name: boltzdesign1
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    volumes:
+      # Mount current directory for inputs/outputs
+      - .:/app
+      # Mount a persistent volume for model weights and cache
+      - boltz_cache:/home/boltz_user/.boltz
+      # Mount inputs directory if it exists
+      - ./inputs:/app/inputs:ro
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    command: conda run -n boltz_design bash
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  boltz_cache:
+    driver: local 
