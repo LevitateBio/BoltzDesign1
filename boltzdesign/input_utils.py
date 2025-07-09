@@ -138,10 +138,11 @@ def get_ligand_smiles(ligand, res_name):
             
     return smiles
 
-def get_ligand_from_pdb(pdb_name):
+def get_ligand_from_pdb(pdb_name, pdb_path=None):
     """
     Get dictionary mapping ligand names to their SMILES strings from a PDB file
     :param pdb_name: id from the pdb, doesn't need to have an extension
+    :param pdb_path: optional path to local PDB file
     :return: dict mapping ligand residue names to SMILES strings
     """
     # Common ions and small molecules to ignore
@@ -149,7 +150,16 @@ def get_ligand_from_pdb(pdb_name):
                    'NI', 'CO', 'CD', 'GOL', 'PEG', 'EDO', 'DMS', 'ACT', 'FMT', 'MES', 'HEM', 'TRS',
                    'ACE', 'BME', 'PGE', 'MPD', 'TLA', 'EOH', 'IPA', 'PCA', 'PG4', 'DTT', 'IMD'}
     
-    _, ligand = get_pdb_components(pdb_name)
+    if pdb_path:
+        # Use local file path
+        pdb = parsePDB(str(pdb_path))
+    else:
+        # Use PDB ID (download from RCSB)
+        pdb = parsePDB(pdb_name)
+    
+    protein = pdb.select('protein')
+    ligand = pdb.select('not protein and not water')
+    
     res_name_list = list(set(ligand.getResnames()) - IGNORE_LIST)
     
     # If no valid ligands found

@@ -669,7 +669,7 @@ def generate_yaml_config(args, config_obj):
             for target_id in pdb_target_ids:
                 target.append(nucleotide_dict[target_id]['seq'])
         elif args.target_type == 'small_molecule':
-            ligand_dict = get_ligand_from_pdb(args.target_name)
+            ligand_dict = get_ligand_from_pdb(args.target_name, pdb_path if args.pdb_path else None)
             for target_mol in target_mols:
                 print(target_mol, ligand_dict.keys())
                 target.append(ligand_dict[target_mol])
