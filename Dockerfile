@@ -63,32 +63,31 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
 # Add conda to PATH
 ENV PATH="/opt/conda/bin:$PATH"
 
-# Create conda environment
-RUN conda create -n boltz_design python=3.10 -y
-
-# Make RUN commands use the conda environment
-SHELL ["conda", "run", "-n", "boltz_design", "/bin/bash", "-c"]
-
-# Install conda dependencies
-RUN conda install -c anaconda ipykernel -y
-
-# Install PyTorch with CUDA support
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
-# Install Python dependencies
-RUN pip install matplotlib seaborn prody tqdm PyYAML requests pypdb py3Dmol logmd==0.1.45
-
-# Install PyRosetta
-RUN pip install pyrosettacolabsetup pyrosetta-installer
-RUN python -c 'import pyrosetta_installer; pyrosetta_installer.install_pyrosetta()'
-
-# Set working directory
+# Set working directory for copying
 WORKDIR /app
 
 # Copy the entire project
 COPY . /app/
 
+# Create conda environment and install everything
+RUN conda create -n boltz_design python=3.10 -y
+RUN conda init bash && \
+    echo "conda activate boltz_design" >> ~/.bashrc
+
+# Set the shell to use conda environment
+SHELL ["conda", "run", "-n", "boltz_design", "/bin/bash", "-c"]
+
+# Install conda and pip dependencies
+RUN conda install -c anaconda ipykernel numpy pandas pyyaml -y
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+RUN pip install matplotlib seaborn prody tqdm requests pypdb py3Dmol logmd==0.1.45
+
+# Install PyRosetta
+RUN pip install pyrosettacolabsetup pyrosetta-installer
+RUN python -c 'import pyrosetta_installer; pyrosetta_installer.install_pyrosetta()'
+
 # Install boltz package FIRST
+WORKDIR /app
 RUN cd boltz && pip install -e . && cd ..
 
 # Download Boltz weights and dependencies AFTER boltz is installed
@@ -103,9 +102,5 @@ RUN chmod +x "boltzdesign/DAlphaBall.gcc"
 # Setup Jupyter kernel for the environment
 RUN python -m ipykernel install --user --name=boltz_design --display-name="Boltz Design"
 
-# Create a non-root user
-RUN useradd -m -s /bin/bash boltz_user && chown -R boltz_user:boltz_user /app
-USER boltz_user
-
-# Set the default command to activate conda environment
-CMD ["conda", "run", "-n", "boltz_design", "bash"] 
+# Set default shell with conda environment activated
+CMD ["conda", "run", "-n", "boltz_design", "/bin/bash"] 
