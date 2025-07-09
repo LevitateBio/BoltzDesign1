@@ -669,7 +669,17 @@ def generate_yaml_config(args, config_obj):
             for target_id in pdb_target_ids:
                 target.append(nucleotide_dict[target_id]['seq'])
         elif args.target_type == 'small_molecule':
-            ligand_dict = get_ligand_from_pdb(args.target_name)
+            # Fix: Use local PDB path instead of trying to download from RCSB
+            if args.pdb_path:
+                # Create a temporary copy with the target_name for prody compatibility
+                import shutil
+                temp_pdb_path = config_obj.PDB_DIR / f"{args.target_name}.pdb"
+                shutil.copy2(pdb_path, temp_pdb_path)
+                ligand_dict = get_ligand_from_pdb(args.target_name)
+                # Clean up temporary file
+                temp_pdb_path.unlink()
+            else:
+                ligand_dict = get_ligand_from_pdb(args.target_name)
             for target_mol in target_mols:
                 print(target_mol, ligand_dict.keys())
                 target.append(ligand_dict[target_mol])
